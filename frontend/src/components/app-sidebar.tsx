@@ -26,7 +26,7 @@ const data = {
     {
       name: "Booking Platform",
       logo: (
-        <img src="/logo.svg" alt="" className="size-4 object-contain" />
+        <img src="/logo.svg" alt="" className="size-8 object-contain" />
       ),
       plan: "Admin",
     },
