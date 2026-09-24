@@ -70,6 +70,22 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
+  venue-service:
+    build:
+      context: ./services/venue-service
+    container_name: booking-venue-service
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/booking_platform
+      SPRING_DATASOURCE_USERNAME: booking
+      SPRING_DATASOURCE_PASSWORD: 123123
+      JWT_SECRET: change-me-to-a-very-long-secret-key-at-least-256-bits-long!!
+    ports:
+      - "8082:8082"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
 volumes:
   postgres_data:
   redis_data:
