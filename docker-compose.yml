@@ -69,6 +69,12 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s -o /dev/null http://127.0.0.1:8081/auth/login || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 90s
     restart: unless-stopped
 
   venue-service:
@@ -89,6 +95,12 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s -o /dev/null http://127.0.0.1:8082/shops || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 90s
     restart: unless-stopped
 
   booking-service:
@@ -115,9 +127,15 @@ services:
       redis:
         condition: service_healthy
       venue-service:
-        condition: service_started
+        condition: service_healthy
       localstack:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s -o /dev/null http://127.0.0.1:8083/bookings/me || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 90s
     restart: unless-stopped
 
   payment-service:
@@ -142,6 +160,12 @@ services:
         condition: service_healthy
       localstack:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s -o /dev/null http://127.0.0.1:8084/payments/webhook || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 90s
     restart: unless-stopped
 
   notification-service:
@@ -164,6 +188,12 @@ services:
     depends_on:
       localstack:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s -o /dev/null http://127.0.0.1:8085/ || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 60s
     restart: unless-stopped
 
   realtime-service:
@@ -181,6 +211,12 @@ services:
     depends_on:
       localstack:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s -o /dev/null http://127.0.0.1:8086/sse-demo.html || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 60s
     restart: unless-stopped
 
   gateway-service:
@@ -197,11 +233,22 @@ services:
     ports:
       - "8080:8080"
     depends_on:
-      - auth-service
-      - venue-service
-      - booking-service
-      - payment-service
-      - realtime-service
+      auth-service:
+        condition: service_healthy
+      venue-service:
+        condition: service_healthy
+      booking-service:
+        condition: service_healthy
+      payment-service:
+        condition: service_healthy
+      realtime-service:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s -o /dev/null http://127.0.0.1:8080/api/venue/shops || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+      start_period: 40s
     restart: unless-stopped
 
 volumes:

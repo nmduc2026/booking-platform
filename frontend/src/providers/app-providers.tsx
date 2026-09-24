@@ -4,6 +4,7 @@ import type { ReactNode } from "react"
 import { BrowserRouter } from "react-router"
 
 import { ThemeProvider } from "@/components/theme-provider"
+import { Toaster } from "@/components/ui/sonner"
 import { TooltipProvider } from "@/components/ui/tooltip"
 import { AuthProvider } from "@/features/auth/auth-context"
 import { queryClient } from "@/lib/query-client"
@@ -19,7 +20,10 @@ export function AppProviders({ children }: AppProvidersProps) {
       <BrowserRouter>
         <AuthProvider>
           <ThemeProvider>
-            <TooltipProvider>{children}</TooltipProvider>
+            <TooltipProvider>
+              {children}
+              <Toaster />
+            </TooltipProvider>
           </ThemeProvider>
         </AuthProvider>
       </BrowserRouter>

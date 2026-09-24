@@ -25,7 +25,8 @@ import {
   createSlot,
   listShopResources,
 } from "@/features/booking/venue-api"
-import { ApiError } from "@/lib/api"
+import { getApiErrorMessage } from "@/lib/api-message"
+import { toast } from "sonner"
 
 const nav = [
   { to: "/manager", label: "Overview" },
@@ -43,7 +44,6 @@ export function ManagerVenuePage() {
   const [startTime, setStartTime] = useState("")
   const [endTime, setEndTime] = useState("")
   const [price, setPrice] = useState("50")
-  const [error, setError] = useState<string | null>(null)
   const queryClient = useQueryClient()
 
   const resourcesQuery = useQuery({
@@ -63,10 +63,10 @@ export function ManagerVenuePage() {
       createResource(shopId, { name: resourceName, type: resourceType }),
     onSuccess: async () => {
       setResourceName("")
+      toast.success("Resource created")
       await queryClient.invalidateQueries({ queryKey: ["resources", shopId] })
     },
-    onError: (err) =>
-      setError(err instanceof ApiError ? err.body || err.message : "Failed"),
+    onError: (err) => toast.error(getApiErrorMessage(err, "Failed to create resource")),
   })
 
   const createSlotMutation = useMutation({
@@ -80,9 +80,9 @@ export function ManagerVenuePage() {
     onSuccess: () => {
       setStartTime("")
       setEndTime("")
+      toast.success("Slot created")
     },
-    onError: (err) =>
-      setError(err instanceof ApiError ? err.body || err.message : "Failed"),
+    onError: (err) => toast.error(getApiErrorMessage(err, "Failed to create slot")),
   })
 
   return (

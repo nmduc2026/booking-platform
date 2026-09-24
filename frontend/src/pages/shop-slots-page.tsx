@@ -16,7 +16,8 @@ import {
 import { createBooking } from "@/features/booking/booking-api"
 import { listShopSlots } from "@/features/booking/venue-api"
 import { useShopBookingStream } from "@/hooks/use-shop-booking-stream"
-import { ApiError } from "@/lib/api"
+import { getApiErrorMessage } from "@/lib/api-message"
+import { toast } from "sonner"
 
 const userNav = [
   { to: "/app", label: "Home" },
@@ -34,7 +35,6 @@ export function ShopSlotsPage() {
   const queryClient = useQueryClient()
   const [date, setDate] = useState(todayIso())
   const [busySlotId, setBusySlotId] = useState<string | null>(null)
-  const [error, setError] = useState<string | null>(null)
 
   const slotsQuery = useQuery({
     queryKey: ["shop-slots", shopId, date],
@@ -47,13 +47,13 @@ export function ShopSlotsPage() {
   })
 
   async function bookSlot(slotId: string) {
-    setError(null)
     setBusySlotId(slotId)
     try {
       const booking = await createBooking(slotId)
+      toast.success("Booking created — continue to payment")
       navigate(`/app/bookings/${booking.id}/checkout`)
     } catch (err) {
-      setError(err instanceof ApiError ? err.body || err.message : "Booking failed")
+      toast.error(getApiErrorMessage(err, "Booking failed"))
     } finally {
       setBusySlotId(null)
     }
@@ -78,8 +78,6 @@ export function ShopSlotsPage() {
           Back to shops
         </Button>
       </div>
-
-      {error ? <p className="mb-3 text-sm text-destructive">{error}</p> : null}
 
       <Table>
         <TableHeader>

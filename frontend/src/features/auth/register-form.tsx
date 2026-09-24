@@ -1,5 +1,5 @@
-import { useState } from "react"
 import { Link, useNavigate } from "react-router"
+import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import {
@@ -19,7 +19,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { register as registerApi } from "@/features/auth/api"
 import { useAuth } from "@/features/auth/auth-context"
-import { ApiError } from "@/lib/api"
+import { getApiErrorMessage } from "@/lib/api-message"
 import { homePathForRole } from "@/lib/auth-storage"
 import { useForm, z, zodResolver } from "@/lib/form"
 
@@ -35,14 +35,12 @@ type FormValues = z.infer<typeof schema>
 export function RegisterForm() {
   const navigate = useNavigate()
   const { setAuth } = useAuth()
-  const [error, setError] = useState<string | null>(null)
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
     defaultValues: { fullName: "", email: "", phone: "", password: "" },
   })
 
   async function onSubmit(values: FormValues) {
-    setError(null)
     try {
       const auth = await registerApi({
         email: values.email,
@@ -51,11 +49,10 @@ export function RegisterForm() {
         phone: values.phone || undefined,
       })
       setAuth(auth)
+      toast.success("Account created")
       navigate(homePathForRole(auth.user.role), { replace: true })
     } catch (err) {
-      setError(
-        err instanceof ApiError ? err.body || err.message : "Registration failed"
-      )
+      toast.error(getApiErrorMessage(err, "Registration failed"))
     }
   }
 
@@ -87,7 +84,6 @@ export function RegisterForm() {
               <Input id="password" type="password" {...form.register("password")} />
               <FieldError>{form.formState.errors.password?.message}</FieldError>
             </Field>
-            {error ? <FieldError>{error}</FieldError> : null}
             <Field>
               <Button type="submit" disabled={form.formState.isSubmitting}>
                 {form.formState.isSubmitting ? "Creating…" : "Create account"}

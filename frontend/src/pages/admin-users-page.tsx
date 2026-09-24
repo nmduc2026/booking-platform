@@ -1,5 +1,6 @@
 import { useMutation } from "@tanstack/react-query"
 import { useState } from "react"
+import { toast } from "sonner"
 
 import { AppShell } from "@/components/app-shell"
 import { Button } from "@/components/ui/button"
@@ -12,7 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select"
 import { createAdminUser, mapUserToShop } from "@/features/auth/api"
-import { ApiError } from "@/lib/api"
+import { getApiErrorMessage } from "@/lib/api-message"
 
 const nav = [
   { to: "/admin", label: "Overview" },
@@ -28,8 +29,6 @@ export function AdminUsersPage() {
   const [role, setRole] = useState("SHOP_MANAGER")
   const [userId, setUserId] = useState("")
   const [shopId, setShopId] = useState("")
-  const [message, setMessage] = useState<string | null>(null)
-  const [error, setError] = useState<string | null>(null)
 
   const createUserMutation = useMutation({
     mutationFn: () =>
@@ -41,25 +40,21 @@ export function AdminUsersPage() {
         role,
       }),
     onSuccess: (user) => {
-      setMessage(`Created user ${user.email} (${user.id})`)
+      toast.success(`Created user ${user.email}`)
       setUserId(user.id)
-      setError(null)
     },
     onError: (err) => {
-      setMessage(null)
-      setError(err instanceof ApiError ? err.body || err.message : "Create failed")
+      toast.error(getApiErrorMessage(err, "Create failed"))
     },
   })
 
   const mapMutation = useMutation({
     mutationFn: () => mapUserToShop({ userId, shopId }),
     onSuccess: (mapping) => {
-      setMessage(`Mapped user ${mapping.userId} → shop ${mapping.shopId}`)
-      setError(null)
+      toast.success(`Mapped user to shop ${mapping.shopId}`)
     },
     onError: (err) => {
-      setMessage(null)
-      setError(err instanceof ApiError ? err.body || err.message : "Mapping failed")
+      toast.error(getApiErrorMessage(err, "Mapping failed"))
     },
   })
 
@@ -105,9 +100,6 @@ export function AdminUsersPage() {
           Map user to shop
         </Button>
       </section>
-
-      {message ? <p className="mt-4 text-sm text-muted-foreground">{message}</p> : null}
-      {error ? <p className="mt-2 text-sm text-destructive">{error}</p> : null}
     </AppShell>
   )
 }

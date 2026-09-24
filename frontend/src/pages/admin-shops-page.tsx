@@ -1,12 +1,13 @@
 import { useMutation } from "@tanstack/react-query"
 import { useState } from "react"
+import { toast } from "sonner"
 
 import { AppShell } from "@/components/app-shell"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { createShop } from "@/features/booking/venue-api"
-import { ApiError } from "@/lib/api"
+import { getApiErrorMessage } from "@/lib/api-message"
 
 const nav = [
   { to: "/admin", label: "Overview" },
@@ -18,8 +19,6 @@ export function AdminShopsPage() {
   const [name, setName] = useState("")
   const [address, setAddress] = useState("")
   const [description, setDescription] = useState("")
-  const [message, setMessage] = useState<string | null>(null)
-  const [error, setError] = useState<string | null>(null)
 
   const mutation = useMutation({
     mutationFn: () =>
@@ -29,15 +28,13 @@ export function AdminShopsPage() {
         description: description || undefined,
       }),
     onSuccess: (shop) => {
-      setMessage(`Created shop ${shop.name} (${shop.id})`)
+      toast.success(`Created shop ${shop.name}`)
       setName("")
       setAddress("")
       setDescription("")
-      setError(null)
     },
     onError: (err) => {
-      setMessage(null)
-      setError(err instanceof ApiError ? err.body || err.message : "Create failed")
+      toast.error(getApiErrorMessage(err, "Create failed"))
     },
   })
 
@@ -65,8 +62,6 @@ export function AdminShopsPage() {
         >
           Create shop
         </Button>
-        {message ? <p className="text-sm text-muted-foreground">{message}</p> : null}
-        {error ? <p className="text-sm text-destructive">{error}</p> : null}
       </div>
     </AppShell>
   )
