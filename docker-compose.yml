@@ -79,10 +79,14 @@ services:
       SPRING_DATASOURCE_USERNAME: booking
       SPRING_DATASOURCE_PASSWORD: 123123
       JWT_SECRET: change-me-to-a-very-long-secret-key-at-least-256-bits-long!!
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
     ports:
       - "8082:8082"
     depends_on:
       postgres:
+        condition: service_healthy
+      redis:
         condition: service_healthy
     restart: unless-stopped
 
@@ -96,10 +100,14 @@ services:
       SPRING_DATASOURCE_PASSWORD: 123123
       JWT_SECRET: change-me-to-a-very-long-secret-key-at-least-256-bits-long!!
       VENUE_SERVICE_BASE_URL: http://venue-service:8082
+      REDIS_HOST: redis
+      REDIS_PORT: "6379"
     ports:
       - "8083:8083"
     depends_on:
       postgres:
+        condition: service_healthy
+      redis:
         condition: service_healthy
       venue-service:
         condition: service_started

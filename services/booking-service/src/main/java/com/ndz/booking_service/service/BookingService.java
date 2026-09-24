@@ -32,39 +32,48 @@ public class BookingService {
     private final BookingRepository bookingRepository;
     private final VenueClient venueClient;
     private final BookingProperties bookingProperties;
+    private final SlotLockService slotLockService;
 
     public BookingService(
             BookingRepository bookingRepository,
             VenueClient venueClient,
-            BookingProperties bookingProperties
+            BookingProperties bookingProperties,
+            SlotLockService slotLockService
     ) {
         this.bookingRepository = bookingRepository;
         this.venueClient = venueClient;
         this.bookingProperties = bookingProperties;
+        this.slotLockService = slotLockService;
     }
 
     @Transactional
     public BookingResponse create(CreateBookingRequest request, UserPrincipal principal) {
-        VenueSlotResponse slot = venueClient.getSlot(request.slotId());
+        String lockToken = slotLockService.tryLock(request.slotId());
+        try {
+            VenueSlotResponse slot = venueClient.getSlot(request.slotId());
 
-        if (!"AVAILABLE".equals(slot.status())) {
-            throw new ApiException(HttpStatus.CONFLICT, "Slot is not available");
+            if (!"AVAILABLE".equals(slot.status())) {
+                throw new ApiException(HttpStatus.CONFLICT, "Slot is not available");
+            }
+
+            if (bookingRepository.existsBySlotIdAndStatusIn(slot.id(), ACTIVE_STATUSES)) {
+                throw new ApiException(HttpStatus.CONFLICT, "Slot already has an active booking");
+            }
+
+            Booking booking = new Booking();
+            booking.setUserId(principal.getId());
+            booking.setShopId(slot.shopId());
+            booking.setSlotId(slot.id());
+            booking.setStatus(BookingStatus.PENDING);
+            booking.setAmount(slot.price());
+            booking.setExpiresAt(Instant.now().plus(bookingProperties.pendingTtlMinutes(), ChronoUnit.MINUTES));
+
+            bookingRepository.save(booking);
+            venueClient.invalidateShopSlotCache(slot.shopId());
+            return BookingResponse.from(booking);
+        } finally {
+            slotLockService.unlock(request.slotId(), lockToken);
         }
-
-        if (bookingRepository.existsBySlotIdAndStatusIn(slot.id(), ACTIVE_STATUSES)) {
-            throw new ApiException(HttpStatus.CONFLICT, "Slot already has an active booking");
-        }
-
-        Booking booking = new Booking();
-        booking.setUserId(principal.getId());
-        booking.setShopId(slot.shopId());
-        booking.setSlotId(slot.id());
-        booking.setStatus(BookingStatus.PENDING);
-        booking.setAmount(slot.price());
-        booking.setExpiresAt(Instant.now().plus(bookingProperties.pendingTtlMinutes(), ChronoUnit.MINUTES));
-
-        bookingRepository.save(booking);
-        return BookingResponse.from(booking);
     }
 
     @Transactional(readOnly = true)
@@ -87,6 +96,7 @@ public class BookingService {
             throw new ApiException(HttpStatus.CONFLICT, "Only PENDING bookings can be confirmed");
         }
         booking.setStatus(BookingStatus.CONFIRMED);
+        venueClient.invalidateShopSlotCache(booking.getShopId());
         return BookingResponse.from(booking);
     }
 
@@ -100,6 +110,7 @@ public class BookingService {
             throw new ApiException(HttpStatus.CONFLICT, "Booking is already cancelling");
         }
         booking.setStatus(BookingStatus.CANCELLED);
+        venueClient.invalidateShopSlotCache(booking.getShopId());
         return BookingResponse.from(booking);
     }
 

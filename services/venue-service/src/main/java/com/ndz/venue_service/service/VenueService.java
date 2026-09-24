@@ -32,15 +32,18 @@ public class VenueService {
     private final ShopRepository shopRepository;
     private final ResourceRepository resourceRepository;
     private final TimeSlotRepository timeSlotRepository;
+    private final SlotCacheService slotCacheService;
 
     public VenueService(
             ShopRepository shopRepository,
             ResourceRepository resourceRepository,
-            TimeSlotRepository timeSlotRepository
+            TimeSlotRepository timeSlotRepository,
+            SlotCacheService slotCacheService
     ) {
         this.shopRepository = shopRepository;
         this.resourceRepository = resourceRepository;
         this.timeSlotRepository = timeSlotRepository;
+        this.slotCacheService = slotCacheService;
     }
 
     @Transactional
@@ -99,6 +102,7 @@ public class VenueService {
         slot.setPrice(request.price());
         slot.setStatus(SlotStatus.AVAILABLE);
         timeSlotRepository.save(slot);
+        slotCacheService.invalidateShop(shopId);
         return TimeSlotResponse.from(slot);
     }
 
@@ -106,10 +110,15 @@ public class VenueService {
     public List<TimeSlotResponse> listAvailableSlots(UUID shopId, LocalDate date) {
         requireActiveShop(shopId);
 
+        List<TimeSlotResponse> cached = slotCacheService.get(shopId, date);
+        if (cached != null) {
+            return cached;
+        }
+
         Instant start = date.atStartOfDay().toInstant(ZoneOffset.UTC);
         Instant end = date.plusDays(1).atStartOfDay().toInstant(ZoneOffset.UTC);
 
-        return timeSlotRepository
+        List<TimeSlotResponse> slots = timeSlotRepository
                 .findByShopIdAndStatusAndStartTimeGreaterThanEqualAndStartTimeLessThanOrderByStartTimeAsc(
                         shopId,
                         SlotStatus.AVAILABLE,
@@ -119,6 +128,9 @@ public class VenueService {
                 .stream()
                 .map(TimeSlotResponse::from)
                 .toList();
+
+        slotCacheService.put(shopId, date, slots);
+        return slots;
     }
 
     @Transactional(readOnly = true)
@@ -126,6 +138,10 @@ public class VenueService {
         TimeSlot slot = timeSlotRepository.findById(slotId)
                 .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Slot not found"));
         return TimeSlotResponse.from(slot);
+    }
+
+    public void invalidateShopSlotCache(UUID shopId) {
+        slotCacheService.invalidateShop(shopId);
     }
 
     private void assertCanManageShop(UserPrincipal principal, UUID shopId) {

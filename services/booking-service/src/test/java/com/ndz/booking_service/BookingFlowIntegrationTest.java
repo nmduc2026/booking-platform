@@ -18,6 +18,7 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.web.servlet.MockMvc;
 import org.springframework.test.web.servlet.MvcResult;
+import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
@@ -31,6 +32,7 @@ import java.util.Map;
 import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
@@ -47,6 +49,10 @@ class BookingFlowIntegrationTest {
     @Container
     static final PostgreSQLContainer<?> POSTGRES;
 
+    @Container
+    static final GenericContainer<?> REDIS =
+            new GenericContainer<>(DockerImageName.parse("redis:7-alpine")).withExposedPorts(6379);
+
     static {
         POSTGRES = new PostgreSQLContainer<>(DockerImageName.parse("postgres:16-alpine"));
         POSTGRES.withDatabaseName("booking_platform");
@@ -59,6 +65,8 @@ class BookingFlowIntegrationTest {
         registry.add("spring.datasource.url", POSTGRES::getJdbcUrl);
         registry.add("spring.datasource.username", POSTGRES::getUsername);
         registry.add("spring.datasource.password", POSTGRES::getPassword);
+        registry.add("spring.data.redis.host", REDIS::getHost);
+        registry.add("spring.data.redis.port", () -> REDIS.getMappedPort(6379));
     }
 
     @TestConfiguration
@@ -81,6 +89,11 @@ class BookingFlowIntegrationTest {
 
     @Autowired
     VenueClient venueClient;
+
+    @org.junit.jupiter.api.BeforeEach
+    void stubInvalidate() {
+        doNothing().when(venueClient).invalidateShopSlotCache(any());
+    }
 
     @Test
     void createConfirmAndCancelBooking() throws Exception {

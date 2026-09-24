@@ -35,4 +35,15 @@ public class VenueClient {
             throw new ApiException(HttpStatus.BAD_GATEWAY, "Failed to call venue-service");
         }
     }
+
+    public void invalidateShopSlotCache(UUID shopId) {
+        try {
+            venueRestClient.delete()
+                    .uri("/internal/shops/{shopId}/slot-cache", shopId)
+                    .retrieve()
+                    .toBodilessEntity();
+        } catch (RestClientResponseException ex) {
+            // Cache invalidation must not fail the booking flow; TTL is the safety net.
+        }
+    }
 }

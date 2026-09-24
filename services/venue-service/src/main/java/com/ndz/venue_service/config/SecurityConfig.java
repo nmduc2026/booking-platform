@@ -29,6 +29,7 @@ public class SecurityConfig {
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.GET, "/shops", "/shops/**", "/slots/**").permitAll()
+                        .requestMatchers(HttpMethod.DELETE, "/internal/**").permitAll()
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.POST, "/shops/**").hasRole("SHOP_MANAGER")
                         .anyRequest().authenticated()
