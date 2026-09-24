@@ -47,6 +47,7 @@ services:
     volumes:
       - localstack_data:/var/lib/localstack
       - /var/run/docker.sock:/var/run/docker.sock
+      - ./localstack/init-aws.sh:/etc/localstack/init/ready.d/init-aws.sh
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:4566/_localstack/health"]
       interval: 10s
@@ -102,6 +103,10 @@ services:
       VENUE_SERVICE_BASE_URL: http://venue-service:8082
       REDIS_HOST: redis
       REDIS_PORT: "6379"
+      AWS_ENDPOINT: http://localstack:4566
+      AWS_REGION: ap-southeast-1
+      AWS_ACCESS_KEY_ID: test
+      AWS_SECRET_ACCESS_KEY: test
     ports:
       - "8083:8083"
     depends_on:
@@ -111,6 +116,8 @@ services:
         condition: service_healthy
       venue-service:
         condition: service_started
+      localstack:
+        condition: service_healthy
     restart: unless-stopped
 
 volumes:

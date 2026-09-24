@@ -5,3 +5,13 @@ app:
     base-url: http://localhost:8082
   booking:
     pending-ttl-minutes: 10
+  outbox:
+    relay-enabled: false
+    poll-interval-ms: 2000
+    batch-size: 50
+  sqs:
+    endpoint: http://localhost:4566
+    region: ap-southeast-1
+    access-key: test
+    secret-key: test
+    booking-events-queue: booking-events

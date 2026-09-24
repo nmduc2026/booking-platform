@@ -33,3 +33,13 @@ app:
     base-url: ${VENUE_SERVICE_BASE_URL:http://localhost:8082}
   booking:
     pending-ttl-minutes: 10
+  outbox:
+    relay-enabled: true
+    poll-interval-ms: 2000
+    batch-size: 50
+  sqs:
+    endpoint: ${AWS_ENDPOINT:http://localhost:4566}
+    region: ${AWS_REGION:ap-southeast-1}
+    access-key: ${AWS_ACCESS_KEY_ID:test}
+    secret-key: ${AWS_SECRET_ACCESS_KEY:test}
+    booking-events-queue: booking-events

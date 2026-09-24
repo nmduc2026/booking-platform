@@ -9,6 +9,7 @@ import com.ndz.booking_service.entity.Booking;
 import com.ndz.booking_service.entity.BookingStatus;
 import com.ndz.booking_service.entity.Role;
 import com.ndz.booking_service.exception.ApiException;
+import com.ndz.booking_service.outbox.OutboxService;
 import com.ndz.booking_service.repository.BookingRepository;
 import com.ndz.booking_service.security.UserPrincipal;
 import org.springframework.http.HttpStatus;
@@ -33,17 +34,20 @@ public class BookingService {
     private final VenueClient venueClient;
     private final BookingProperties bookingProperties;
     private final SlotLockService slotLockService;
+    private final OutboxService outboxService;
 
     public BookingService(
             BookingRepository bookingRepository,
             VenueClient venueClient,
             BookingProperties bookingProperties,
-            SlotLockService slotLockService
+            SlotLockService slotLockService,
+            OutboxService outboxService
     ) {
         this.bookingRepository = bookingRepository;
         this.venueClient = venueClient;
         this.bookingProperties = bookingProperties;
         this.slotLockService = slotLockService;
+        this.outboxService = outboxService;
     }
 
     @Transactional
@@ -69,6 +73,7 @@ public class BookingService {
             booking.setExpiresAt(Instant.now().plus(bookingProperties.pendingTtlMinutes(), ChronoUnit.MINUTES));
 
             bookingRepository.save(booking);
+            outboxService.enqueue(OutboxService.BOOKING_CREATED, booking);
             venueClient.invalidateShopSlotCache(slot.shopId());
             return BookingResponse.from(booking);
         } finally {
@@ -96,6 +101,7 @@ public class BookingService {
             throw new ApiException(HttpStatus.CONFLICT, "Only PENDING bookings can be confirmed");
         }
         booking.setStatus(BookingStatus.CONFIRMED);
+        outboxService.enqueue(OutboxService.BOOKING_CONFIRMED, booking);
         venueClient.invalidateShopSlotCache(booking.getShopId());
         return BookingResponse.from(booking);
     }
@@ -110,6 +116,7 @@ public class BookingService {
             throw new ApiException(HttpStatus.CONFLICT, "Booking is already cancelling");
         }
         booking.setStatus(BookingStatus.CANCELLED);
+        outboxService.enqueue(OutboxService.BOOKING_CANCELLED, booking);
         venueClient.invalidateShopSlotCache(booking.getShopId());
         return BookingResponse.from(booking);
     }
