@@ -47,6 +47,14 @@ public class ShopController {
         return venueService.listAvailableSlots(shopId, date);
     }
 
+    @GetMapping("/{shopId}/resources")
+    public List<ResourceResponse> listResources(
+            @PathVariable UUID shopId,
+            @AuthenticationPrincipal UserPrincipal principal
+    ) {
+        return venueService.listResources(shopId, principal);
+    }
+
     @PostMapping("/{shopId}/resources")
     @ResponseStatus(HttpStatus.CREATED)
     public ResourceResponse createResource(

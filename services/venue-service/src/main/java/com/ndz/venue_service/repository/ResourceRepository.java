@@ -8,5 +8,7 @@ import java.util.UUID;
 
 public interface ResourceRepository extends JpaRepository<Resource, UUID> {
 
+    List<Resource> findByShopIdOrderByNameAsc(UUID shopId);
+
     Optional<Resource> findByIdAndShopId(UUID id, UUID shopId);
 }

@@ -78,6 +78,15 @@ public class VenueService {
         return ResourceResponse.from(resource);
     }
 
+    @Transactional(readOnly = true)
+    public List<ResourceResponse> listResources(UUID shopId, UserPrincipal principal) {
+        assertCanManageShop(principal, shopId);
+        requireActiveShop(shopId);
+        return resourceRepository.findByShopIdOrderByNameAsc(shopId).stream()
+                .map(ResourceResponse::from)
+                .toList();
+    }
+
     @Transactional
     public TimeSlotResponse createSlot(UUID shopId, CreateTimeSlotRequest request, UserPrincipal principal) {
         assertCanManageShop(principal, shopId);

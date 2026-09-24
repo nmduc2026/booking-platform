@@ -28,10 +28,11 @@ public class SecurityConfig {
                 .cors(Customizer.withDefaults())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(HttpMethod.GET, "/shops/*/resources").hasAnyRole("SHOP_MANAGER", "ADMIN")
                         .requestMatchers(HttpMethod.GET, "/shops", "/shops/**", "/slots/**").permitAll()
                         .requestMatchers(HttpMethod.DELETE, "/internal/**").permitAll()
                         .requestMatchers("/admin/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/shops/**").hasRole("SHOP_MANAGER")
+                        .requestMatchers(HttpMethod.POST, "/shops/**").hasAnyRole("SHOP_MANAGER", "ADMIN")
                         .anyRequest().authenticated()
                 )
                 .exceptionHandling(ex -> ex

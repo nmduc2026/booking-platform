@@ -36,7 +36,7 @@ public class UserPrincipal implements UserDetails {
     }
 
     public boolean canManageShop(UUID shopId) {
-        return shopIds.contains(shopId);
+        return role == Role.ADMIN || shopIds.contains(shopId);
     }
 
     @Override

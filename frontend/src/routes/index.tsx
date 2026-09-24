@@ -5,7 +5,9 @@ import { homePathForRole } from "@/lib/auth-storage"
 import { AdminHomePage } from "@/pages/admin-home-page"
 import { CheckoutPage } from "@/pages/checkout-page"
 import { LoginPage } from "@/pages/login-page"
+import { ManagerBookingsPage } from "@/pages/manager-bookings-page"
 import { ManagerHomePage } from "@/pages/manager-home-page"
+import { ManagerVenuePage } from "@/pages/manager-venue-page"
 import { MyBookingsPage } from "@/pages/my-bookings-page"
 import { RegisterPage } from "@/pages/register-page"
 import { ShopSlotsPage } from "@/pages/shop-slots-page"
@@ -38,6 +40,8 @@ export function AppRoutes() {
 
       <Route element={<RequireAuth roles={["SHOP_MANAGER"]} />}>
         <Route path="/manager" element={<ManagerHomePage />} />
+        <Route path="/manager/venue" element={<ManagerVenuePage />} />
+        <Route path="/manager/bookings" element={<ManagerBookingsPage />} />
       </Route>
 
       <Route element={<RequireAuth roles={["ADMIN"]} />}>

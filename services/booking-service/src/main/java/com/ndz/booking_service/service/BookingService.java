@@ -99,6 +99,16 @@ public class BookingService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
+    public List<BookingResponse> listByShop(UUID shopId, UserPrincipal principal) {
+        if (principal.getRole() != Role.ADMIN && !principal.getShopIds().contains(shopId)) {
+            throw new ApiException(HttpStatus.FORBIDDEN, "You do not manage this shop");
+        }
+        return bookingRepository.findByShopIdOrderByCreatedAtDesc(shopId).stream()
+                .map(BookingResponse::from)
+                .toList();
+    }
+
     /**
      * Saga: payment succeeded → confirm pending booking.
      */

@@ -42,6 +42,14 @@ public class BookingController {
         return bookingService.listMine(principal);
     }
 
+    @GetMapping("/shop/{shopId}")
+    public List<BookingResponse> listByShop(
+            @PathVariable UUID shopId,
+            @AuthenticationPrincipal UserPrincipal principal
+    ) {
+        return bookingService.listByShop(shopId, principal);
+    }
+
     @GetMapping("/{bookingId}")
     public BookingResponse getById(
             @PathVariable UUID bookingId,
