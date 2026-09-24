@@ -102,8 +102,6 @@ export function ManagerVenuePage() {
         </Select>
       </div>
 
-      {error ? <p className="mb-3 text-sm text-destructive">{error}</p> : null}
-
       <section className="mb-10 space-y-3">
         <h2 className="text-lg font-medium">Resources</h2>
         <div className="flex flex-wrap gap-2">
