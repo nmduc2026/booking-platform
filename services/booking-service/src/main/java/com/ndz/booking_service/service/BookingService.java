@@ -70,6 +70,7 @@ public class BookingService {
 
             Booking booking = new Booking();
             booking.setUserId(principal.getId());
+            booking.setUserEmail(principal.getUsername());
             booking.setShopId(slot.shopId());
             booking.setSlotId(slot.id());
             booking.setStatus(BookingStatus.PENDING);

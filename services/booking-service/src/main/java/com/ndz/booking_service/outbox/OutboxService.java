@@ -34,6 +34,9 @@ public class OutboxService {
         payload.put("slotId", booking.getSlotId().toString());
         payload.put("status", booking.getStatus().name());
         payload.put("amount", booking.getAmount());
+        if (booking.getUserEmail() != null && !booking.getUserEmail().isBlank()) {
+            payload.put("userEmail", booking.getUserEmail());
+        }
 
         OutboxEvent event = new OutboxEvent();
         event.setAggregateId(booking.getId());

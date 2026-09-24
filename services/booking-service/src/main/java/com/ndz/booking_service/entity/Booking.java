@@ -23,6 +23,9 @@ public class Booking {
     @Column(name = "user_id", nullable = false)
     private UUID userId;
 
+    @Column(name = "user_email", length = 255)
+    private String userEmail;
+
     @Column(name = "shop_id", nullable = false)
     private UUID shopId;
 
@@ -73,6 +76,14 @@ public class Booking {
 
     public void setUserId(UUID userId) {
         this.userId = userId;
+    }
+
+    public String getUserEmail() {
+        return userEmail;
+    }
+
+    public void setUserEmail(String userEmail) {
+        this.userEmail = userEmail;
     }
 
     public UUID getShopId() {
