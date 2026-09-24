@@ -1,119 +1,122 @@
-"use client"
-
-import * as React from "react"
+import { Link, useLocation } from "react-router"
+import type { ReactNode } from "react"
+import {
+  CalendarDaysIcon,
+  LayoutDashboardIcon,
+  StoreIcon,
+} from "lucide-react"
 
 import { NavMain } from "@/components/nav-main"
-import { NavProjects } from "@/components/nav-projects"
 import { NavUser } from "@/components/nav-user"
-import { TeamSwitcher } from "@/components/team-switcher"
 import {
   Sidebar,
   SidebarContent,
   SidebarFooter,
   SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
   SidebarRail,
 } from "@/components/ui/sidebar"
-import { AudioLinesIcon, TerminalIcon, TerminalSquareIcon, BotIcon, BookOpenIcon, Settings2Icon, FrameIcon, PieChartIcon, MapIcon } from "lucide-react"
+import { useAuth } from "@/features/auth/auth-context"
+import type { Role } from "@/lib/auth-storage"
 
-// This is sample data.
-const data = {
-  user: {
-    name: "Shop Manager",
-    email: "manager@spa.com",
-    avatar: "",
-  },
-  teams: [
+type NavItem = {
+  title: string
+  url: string
+  icon?: ReactNode
+  isActive?: boolean
+  items?: { title: string; url: string }[]
+}
+
+function navForRole(role: Role, pathname: string): NavItem[] {
+  if (role === "ADMIN") {
+    return [
+      {
+        title: "Admin",
+        url: "/admin",
+        icon: <LayoutDashboardIcon />,
+        isActive: pathname.startsWith("/admin"),
+        items: [
+          { title: "Overview", url: "/admin" },
+          { title: "Shops", url: "/admin/shops" },
+          { title: "Users", url: "/admin/users" },
+        ],
+      },
+    ]
+  }
+
+  if (role === "SHOP_MANAGER") {
+    return [
+      {
+        title: "Manager",
+        url: "/manager",
+        icon: <StoreIcon />,
+        isActive: pathname.startsWith("/manager"),
+        items: [
+          { title: "Overview", url: "/manager" },
+          { title: "Venue", url: "/manager/venue" },
+          { title: "Bookings", url: "/manager/bookings" },
+        ],
+      },
+    ]
+  }
+
+  return [
     {
-      name: "Booking Platform",
-      logo: (
-        <img src="/logo.svg" alt="" className="size-8 object-contain" />
-      ),
-      plan: "Admin",
-    },
-    {
-      name: "Serenity Spa",
-      logo: <AudioLinesIcon />,
-      plan: "Shop Manager",
-    },
-    {
-      name: "Lotus Wellness",
-      logo: <TerminalIcon />,
-      plan: "Shop Manager",
-    },
-  ],
-  navMain: [
-    {
-      title: "Bookings",
-      url: "#",
-      icon: <TerminalSquareIcon />,
-      isActive: true,
+      title: "Booking",
+      url: "/app",
+      icon: <CalendarDaysIcon />,
+      isActive: pathname.startsWith("/app"),
       items: [
-        { title: "All bookings", url: "#" },
-        { title: "Pending", url: "#" },
-        { title: "Confirmed", url: "#" },
+        { title: "Home", url: "/app" },
+        { title: "Find shops", url: "/app/shops" },
+        { title: "My bookings", url: "/app/bookings" },
       ],
     },
-    {
-      title: "Venue",
-      url: "#",
-      icon: <BotIcon />,
-      items: [
-        { title: "Shops", url: "#" },
-        { title: "Resources", url: "#" },
-        { title: "Time slots", url: "#" },
-      ],
-    },
-    {
-      title: "Payments",
-      url: "#",
-      icon: <BookOpenIcon />,
-      items: [
-        { title: "Transactions", url: "#" },
-        { title: "Refunds", url: "#" },
-      ],
-    },
-    {
-      title: "Settings",
-      url: "#",
-      icon: <Settings2Icon />,
-      items: [
-        { title: "General", url: "#" },
-        { title: "Users", url: "#" },
-        { title: "Roles", url: "#" },
-      ],
-    },
-  ],
-  projects: [
-    {
-      name: "Serenity Spa",
-      url: "#",
-      icon: <FrameIcon />,
-    },
-    {
-      name: "Lotus Wellness",
-      url: "#",
-      icon: <PieChartIcon />,
-    },
-    {
-      name: "Zen Garden",
-      url: "#",
-      icon: <MapIcon />,
-    },
-  ],
+  ]
 }
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const { user } = useAuth()
+  const location = useLocation()
+  const role = user?.role ?? "USER"
+  const navMain = navForRole(role, location.pathname)
+
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
-        <TeamSwitcher teams={data.teams} />
+        <SidebarMenu>
+          <SidebarMenuItem>
+            <SidebarMenuButton size="lg" render={<Link to="/" />}>
+              <div className="flex aspect-square size-8 items-center justify-center">
+                <img src="/logo.svg" alt="" className="size-8 object-contain" />
+              </div>
+              <div className="grid flex-1 text-left text-sm leading-tight">
+                <span className="truncate font-medium">Booking Platform</span>
+                <span className="truncate text-xs">{role}</span>
+              </div>
+            </SidebarMenuButton>
+          </SidebarMenuItem>
+        </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        <NavMain items={data.navMain} />
-        <NavProjects projects={data.projects} />
+        <NavMain items={navMain} />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        <NavUser
+          user={{
+            name: user?.fullName ?? "User",
+            email: user?.email ?? "",
+            avatar: "",
+            initials: (user?.fullName ?? "U")
+              .split(" ")
+              .map((part) => part[0])
+              .join("")
+              .slice(0, 2)
+              .toUpperCase(),
+          }}
+        />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

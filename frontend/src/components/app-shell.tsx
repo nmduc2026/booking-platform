@@ -1,54 +1,68 @@
-import { Link } from "react-router"
 import type { ReactNode } from "react"
+import { useLocation } from "react-router"
 
-import { Button } from "@/components/ui/button"
-import { useAuth } from "@/features/auth/auth-context"
+import { AppSidebar } from "@/components/app-sidebar"
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb"
+import { Separator } from "@/components/ui/separator"
+import {
+  SidebarInset,
+  SidebarProvider,
+  SidebarTrigger,
+} from "@/components/ui/sidebar"
 
 type AppShellProps = {
   title: string
-  nav: { to: string; label: string }[]
+  /** Kept for call-site compatibility; sidebar owns navigation now. */
+  nav?: { to: string; label: string }[]
   children: ReactNode
 }
 
-export function AppShell({ title, nav, children }: AppShellProps) {
-  const { user, logout } = useAuth()
+export function AppShell({ title, children }: AppShellProps) {
+  const location = useLocation()
+  const section = location.pathname.split("/").filter(Boolean)[0] ?? "app"
 
   return (
-    <div className="min-h-svh bg-background text-foreground">
-      <header className="border-b">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-4 py-3">
-          <div className="flex items-center gap-6">
-            <Link to="/" className="flex items-center gap-2 font-semibold">
-              <img src="/logo.svg" alt="" className="h-6 w-auto" />
-              Booking Platform
-            </Link>
-            <nav className="hidden items-center gap-3 text-sm md:flex">
-              {nav.map((item) => (
-                <Link
-                  key={item.to}
-                  to={item.to}
-                  className="text-muted-foreground transition-colors hover:text-foreground"
-                >
-                  {item.label}
-                </Link>
-              ))}
-            </nav>
+    <SidebarProvider>
+      <AppSidebar />
+      <SidebarInset>
+        <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
+          <div className="flex items-center gap-2 px-4">
+            <SidebarTrigger className="-ml-1" />
+            <Separator
+              orientation="vertical"
+              className="mr-2 data-vertical:h-4 data-vertical:self-center"
+            />
+            <Breadcrumb>
+              <BreadcrumbList>
+                <BreadcrumbItem className="hidden md:block">
+                  <BreadcrumbLink href={`/${section}`}>
+                    {section === "admin"
+                      ? "Admin"
+                      : section === "manager"
+                        ? "Manager"
+                        : "App"}
+                  </BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator className="hidden md:block" />
+                <BreadcrumbItem>
+                  <BreadcrumbPage>{title}</BreadcrumbPage>
+                </BreadcrumbItem>
+              </BreadcrumbList>
+            </Breadcrumb>
           </div>
-          <div className="flex items-center gap-3 text-sm">
-            <div className="hidden text-right sm:block">
-              <div className="font-medium">{user?.fullName}</div>
-              <div className="text-muted-foreground">{user?.role}</div>
-            </div>
-            <Button variant="outline" size="sm" onClick={logout}>
-              Log out
-            </Button>
-          </div>
+        </header>
+        <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
+          <h1 className="text-2xl font-semibold tracking-tight">{title}</h1>
+          {children}
         </div>
-      </header>
-      <main className="mx-auto max-w-6xl px-4 py-8">
-        <h1 className="mb-6 text-2xl font-semibold tracking-tight">{title}</h1>
-        {children}
-      </main>
-    </div>
+      </SidebarInset>
+    </SidebarProvider>
   )
 }
