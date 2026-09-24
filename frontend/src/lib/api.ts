@@ -1,3 +1,5 @@
+import { getAccessToken } from "@/lib/auth-storage"
+
 const API_BASE = import.meta.env.VITE_API_BASE_URL ?? "http://localhost:8080"
 
 export class ApiError extends Error {
@@ -12,10 +14,21 @@ export class ApiError extends Error {
   }
 }
 
-export async function api<T>(path: string, init?: RequestInit): Promise<T> {
-  const headers = new Headers(init?.headers)
-  if (!headers.has("Content-Type") && init?.body) {
+type ApiOptions = RequestInit & {
+  auth?: boolean
+}
+
+export async function api<T>(path: string, init: ApiOptions = {}): Promise<T> {
+  const headers = new Headers(init.headers)
+  if (!headers.has("Content-Type") && init.body) {
     headers.set("Content-Type", "application/json")
+  }
+
+  if (init.auth !== false) {
+    const token = getAccessToken()
+    if (token) {
+      headers.set("Authorization", `Bearer ${token}`)
+    }
   }
 
   const response = await fetch(`${API_BASE}${path}`, {
@@ -31,5 +44,10 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
     return undefined as T
   }
 
-  return response.json() as Promise<T>
+  const text = await response.text()
+  if (!text) {
+    return undefined as T
+  }
+
+  return JSON.parse(text) as T
 }

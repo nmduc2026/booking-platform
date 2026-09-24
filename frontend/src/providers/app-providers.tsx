@@ -5,6 +5,7 @@ import { BrowserRouter } from "react-router"
 
 import { ThemeProvider } from "@/components/theme-provider"
 import { TooltipProvider } from "@/components/ui/tooltip"
+import { AuthProvider } from "@/features/auth/auth-context"
 import { queryClient } from "@/lib/query-client"
 import { stripePromise } from "@/lib/stripe"
 
@@ -16,9 +17,11 @@ export function AppProviders({ children }: AppProvidersProps) {
   const content = (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
-        <ThemeProvider>
-          <TooltipProvider>{children}</TooltipProvider>
-        </ThemeProvider>
+        <AuthProvider>
+          <ThemeProvider>
+            <TooltipProvider>{children}</TooltipProvider>
+          </ThemeProvider>
+        </AuthProvider>
       </BrowserRouter>
     </QueryClientProvider>
   )
