@@ -3,6 +3,8 @@ import { Navigate, Route, Routes } from "react-router"
 import { useAuth } from "@/features/auth/auth-context"
 import { homePathForRole } from "@/lib/auth-storage"
 import { AdminHomePage } from "@/pages/admin-home-page"
+import { AdminShopsPage } from "@/pages/admin-shops-page"
+import { AdminUsersPage } from "@/pages/admin-users-page"
 import { CheckoutPage } from "@/pages/checkout-page"
 import { LoginPage } from "@/pages/login-page"
 import { ManagerBookingsPage } from "@/pages/manager-bookings-page"
@@ -46,6 +48,8 @@ export function AppRoutes() {
 
       <Route element={<RequireAuth roles={["ADMIN"]} />}>
         <Route path="/admin" element={<AdminHomePage />} />
+        <Route path="/admin/shops" element={<AdminShopsPage />} />
+        <Route path="/admin/users" element={<AdminUsersPage />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/" replace />} />
