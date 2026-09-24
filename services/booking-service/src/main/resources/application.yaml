@@ -1,3 +1,31 @@
+server:
+  port: 8083
+
 spring:
   application:
     name: booking-service
+  datasource:
+    url: jdbc:postgresql://localhost:5432/booking_platform
+    username: booking
+    password: 123123
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        default_schema: booking_schema
+  flyway:
+    enabled: true
+    schemas: booking_schema
+    default-schema: booking_schema
+    create-schemas: true
+    locations: classpath:db/migration
+
+app:
+  jwt:
+    secret: ${JWT_SECRET:change-me-to-a-very-long-secret-key-at-least-256-bits-long!!}
+  venue-service:
+    base-url: ${VENUE_SERVICE_BASE_URL:http://localhost:8082}
+  booking:
+    pending-ttl-minutes: 10

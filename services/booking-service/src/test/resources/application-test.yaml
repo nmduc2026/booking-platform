@@ -1,0 +1,7 @@
+app:
+  jwt:
+    secret: test-secret-key-that-is-long-enough-for-hs256-algorithm-123456
+  venue-service:
+    base-url: http://localhost:8082
+  booking:
+    pending-ttl-minutes: 10

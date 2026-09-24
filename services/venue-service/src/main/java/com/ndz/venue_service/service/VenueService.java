@@ -121,6 +121,13 @@ public class VenueService {
                 .toList();
     }
 
+    @Transactional(readOnly = true)
+    public TimeSlotResponse getSlot(UUID slotId) {
+        TimeSlot slot = timeSlotRepository.findById(slotId)
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND, "Slot not found"));
+        return TimeSlotResponse.from(slot);
+    }
+
     private void assertCanManageShop(UserPrincipal principal, UUID shopId) {
         if (!principal.canManageShop(shopId)) {
             throw new ApiException(HttpStatus.FORBIDDEN, "You do not manage this shop");
