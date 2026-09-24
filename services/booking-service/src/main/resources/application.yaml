@@ -45,6 +45,7 @@ app:
     access-key: ${AWS_ACCESS_KEY_ID:test}
     secret-key: ${AWS_SECRET_ACCESS_KEY:test}
     booking-events-queue: booking-events
+    booking-events-realtime-queue: booking-events-realtime
     payment-events-queue: payment-events
     consumer-enabled: true
     consumer-poll-interval-ms: 2000

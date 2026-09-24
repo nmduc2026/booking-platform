@@ -6,7 +6,11 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 import software.amazon.awssdk.services.sqs.SqsClient;
 import software.amazon.awssdk.services.sqs.model.GetQueueUrlRequest;
+import software.amazon.awssdk.services.sqs.model.MessageAttributeValue;
 import software.amazon.awssdk.services.sqs.model.SendMessageRequest;
+
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 @Component
 public class SqsBookingEventPublisher implements BookingEventPublisher {
@@ -15,7 +19,7 @@ public class SqsBookingEventPublisher implements BookingEventPublisher {
 
     private final SqsClient sqsClient;
     private final SqsProperties properties;
-    private volatile String queueUrl;
+    private final ConcurrentHashMap<String, String> queueUrls = new ConcurrentHashMap<>();
 
     public SqsBookingEventPublisher(SqsClient sqsClient, SqsProperties properties) {
         this.sqsClient = sqsClient;
@@ -24,32 +28,28 @@ public class SqsBookingEventPublisher implements BookingEventPublisher {
 
     @Override
     public void publish(String eventType, String payload) {
-        String url = resolveQueueUrl();
+        send(properties.bookingEventsQueue(), eventType, payload);
+        send(properties.bookingEventsRealtimeQueue(), eventType, payload);
+    }
+
+    private void send(String queueName, String eventType, String payload) {
         sqsClient.sendMessage(SendMessageRequest.builder()
-                .queueUrl(url)
+                .queueUrl(resolveQueueUrl(queueName))
                 .messageBody(payload)
-                .messageAttributes(java.util.Map.of(
+                .messageAttributes(Map.of(
                         "eventType",
-                        software.amazon.awssdk.services.sqs.model.MessageAttributeValue.builder()
+                        MessageAttributeValue.builder()
                                 .dataType("String")
                                 .stringValue(eventType)
                                 .build()
                 ))
                 .build());
-        log.info("Published {} to {}", eventType, properties.bookingEventsQueue());
+        log.info("Published {} to {}", eventType, queueName);
     }
 
-    private String resolveQueueUrl() {
-        if (queueUrl == null) {
-            synchronized (this) {
-                if (queueUrl == null) {
-                    queueUrl = sqsClient.getQueueUrl(GetQueueUrlRequest.builder()
-                                    .queueName(properties.bookingEventsQueue())
-                                    .build())
-                            .queueUrl();
-                }
-            }
-        }
-        return queueUrl;
+    private String resolveQueueUrl(String queueName) {
+        return queueUrls.computeIfAbsent(queueName, name ->
+                sqsClient.getQueueUrl(GetQueueUrlRequest.builder().queueName(name).build()).queueUrl()
+        );
     }
 }

@@ -16,6 +16,7 @@ app:
     access-key: test
     secret-key: test
     booking-events-queue: booking-events
+    booking-events-realtime-queue: booking-events-realtime
     payment-events-queue: payment-events
     consumer-enabled: false
     consumer-poll-interval-ms: 2000

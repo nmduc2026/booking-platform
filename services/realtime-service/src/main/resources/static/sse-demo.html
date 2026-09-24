@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>SSE Demo — Booking Platform</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 2rem; }
+    #log { white-space: pre-wrap; background: #111; color: #0f0; padding: 1rem; min-height: 200px; }
+    input { width: 28rem; padding: 0.4rem; }
+    button { padding: 0.4rem 0.8rem; }
+  </style>
+</head>
+<body>
+  <h1>Realtime SSE demo</h1>
+  <p>Paste a JWT and shop UUID, then connect with EventSource.</p>
+  <p>
+    <label>Shop ID <input id="shopId" placeholder="shop-uuid" /></label>
+  </p>
+  <p>
+    <label>Access token <input id="token" placeholder="JWT" /></label>
+  </p>
+  <button id="connect">Connect</button>
+  <div id="log"></div>
+  <script>
+    const log = (msg) => {
+      document.getElementById('log').textContent += msg + '\n';
+    };
+    document.getElementById('connect').onclick = () => {
+      const shopId = document.getElementById('shopId').value.trim();
+      const token = document.getElementById('token').value.trim();
+      if (!shopId || !token) {
+        alert('shopId and token required');
+        return;
+      }
+      const url = '/realtime/shops/' + encodeURIComponent(shopId) + '/stream?access_token=' + encodeURIComponent(token);
+      const es = new EventSource(url);
+      es.addEventListener('connected', (e) => log('connected: ' + e.data));
+      es.addEventListener('booking', (e) => log('booking: ' + e.data));
+      es.onerror = () => log('error / disconnected');
+      log('connecting to ' + url);
+    };
+  </script>
+</body>
+</html>

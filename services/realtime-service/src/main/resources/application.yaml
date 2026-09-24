@@ -1,3 +1,20 @@
+server:
+  port: 8086
+
 spring:
   application:
     name: realtime-service
+
+app:
+  jwt:
+    secret: ${JWT_SECRET:change-me-to-a-very-long-secret-key-at-least-256-bits-long!!}
+  sqs:
+    endpoint: ${AWS_ENDPOINT:http://localhost:4566}
+    region: ${AWS_REGION:ap-southeast-1}
+    access-key: ${AWS_ACCESS_KEY_ID:test}
+    secret-key: ${AWS_SECRET_ACCESS_KEY:test}
+    booking-events-queue: booking-events-realtime
+    consumer-enabled: true
+    consumer-poll-interval-ms: 2000
+    consumer-batch-size: 10
+    consumer-wait-time-seconds: 1

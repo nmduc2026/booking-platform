@@ -1,4 +1,4 @@
-package com.ndz.booking_service.config;
+package com.ndz.realtime_service.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
@@ -9,8 +9,6 @@ public record SqsProperties(
         String accessKey,
         String secretKey,
         String bookingEventsQueue,
-        String bookingEventsRealtimeQueue,
-        String paymentEventsQueue,
         boolean consumerEnabled,
         long consumerPollIntervalMs,
         int consumerBatchSize,
