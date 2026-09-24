@@ -1,0 +1,7 @@
+app:
+  bootstrap-admin:
+    enabled: false
+  jwt:
+    secret: test-secret-key-that-is-long-enough-for-hs256-algorithm-123456
+    access-token-expiration-ms: 900000
+    refresh-token-expiration-ms: 604800000

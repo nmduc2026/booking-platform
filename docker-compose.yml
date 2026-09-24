@@ -54,6 +54,22 @@ services:
       retries: 10
     restart: unless-stopped
 
+  auth-service:
+    build:
+      context: ./services/auth-service
+    container_name: booking-auth-service
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/booking_platform
+      SPRING_DATASOURCE_USERNAME: booking
+      SPRING_DATASOURCE_PASSWORD: 123123
+      JWT_SECRET: change-me-to-a-very-long-secret-key-at-least-256-bits-long!!
+    ports:
+      - "8081:8081"
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
 volumes:
   postgres_data:
   redis_data:
