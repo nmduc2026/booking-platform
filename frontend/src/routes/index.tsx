@@ -3,9 +3,13 @@ import { Navigate, Route, Routes } from "react-router"
 import { useAuth } from "@/features/auth/auth-context"
 import { homePathForRole } from "@/lib/auth-storage"
 import { AdminHomePage } from "@/pages/admin-home-page"
+import { CheckoutPage } from "@/pages/checkout-page"
 import { LoginPage } from "@/pages/login-page"
 import { ManagerHomePage } from "@/pages/manager-home-page"
+import { MyBookingsPage } from "@/pages/my-bookings-page"
 import { RegisterPage } from "@/pages/register-page"
+import { ShopSlotsPage } from "@/pages/shop-slots-page"
+import { ShopsPage } from "@/pages/shops-page"
 import { UserHomePage } from "@/pages/user-home-page"
 import { RequireAuth } from "@/routes/require-auth"
 
@@ -26,6 +30,10 @@ export function AppRoutes() {
 
       <Route element={<RequireAuth roles={["USER"]} />}>
         <Route path="/app" element={<UserHomePage />} />
+        <Route path="/app/shops" element={<ShopsPage />} />
+        <Route path="/app/shops/:shopId" element={<ShopSlotsPage />} />
+        <Route path="/app/bookings" element={<MyBookingsPage />} />
+        <Route path="/app/bookings/:bookingId/checkout" element={<CheckoutPage />} />
       </Route>
 
       <Route element={<RequireAuth roles={["SHOP_MANAGER"]} />}>
