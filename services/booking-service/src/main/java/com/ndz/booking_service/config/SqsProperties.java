@@ -8,6 +8,11 @@ public record SqsProperties(
         String region,
         String accessKey,
         String secretKey,
-        String bookingEventsQueue
+        String bookingEventsQueue,
+        String paymentEventsQueue,
+        boolean consumerEnabled,
+        long consumerPollIntervalMs,
+        int consumerBatchSize,
+        int consumerWaitTimeSeconds
 ) {
 }

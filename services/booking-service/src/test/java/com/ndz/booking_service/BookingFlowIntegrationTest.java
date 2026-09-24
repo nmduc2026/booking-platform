@@ -3,6 +3,7 @@ package com.ndz.booking_service;
 import com.ndz.booking_service.client.VenueClient;
 import com.ndz.booking_service.client.VenueSlotResponse;
 import com.ndz.booking_service.entity.Role;
+import com.ndz.booking_service.messaging.PaymentEventHandler;
 import com.ndz.booking_service.security.JwtService;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -35,7 +36,6 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
-import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -90,13 +90,16 @@ class BookingFlowIntegrationTest {
     @Autowired
     VenueClient venueClient;
 
+    @Autowired
+    PaymentEventHandler paymentEventHandler;
+
     @org.junit.jupiter.api.BeforeEach
     void stubInvalidate() {
         doNothing().when(venueClient).invalidateShopSlotCache(any());
     }
 
     @Test
-    void createConfirmAndCancelBooking() throws Exception {
+    void createThenConfirmViaPaymentEvent() throws Exception {
         UUID userId = UUID.randomUUID();
         UUID shopId = UUID.randomUUID();
         UUID slotId = UUID.randomUUID();
@@ -124,15 +127,17 @@ class BookingFlowIntegrationTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("PENDING"));
 
-        mockMvc.perform(patch("/bookings/" + bookingId + "/confirm")
+        paymentEventHandler.handle(objectMapper.writeValueAsString(Map.of(
+                "eventType", PaymentEventHandler.PAYMENT_SUCCEEDED,
+                "paymentId", UUID.randomUUID().toString(),
+                "bookingId", bookingId.toString(),
+                "status", "SUCCEEDED"
+        )));
+
+        mockMvc.perform(get("/bookings/" + bookingId)
                         .header("Authorization", "Bearer " + userToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.status").value("CONFIRMED"));
-
-        mockMvc.perform(patch("/bookings/" + bookingId + "/cancel")
-                        .header("Authorization", "Bearer " + userToken))
-                .andExpect(status().isOk())
-                .andExpect(jsonPath("$.status").value("CANCELLED"));
     }
 
     @Test

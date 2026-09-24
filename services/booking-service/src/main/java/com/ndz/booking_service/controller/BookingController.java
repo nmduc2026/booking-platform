@@ -8,7 +8,6 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -49,21 +48,5 @@ public class BookingController {
             @AuthenticationPrincipal UserPrincipal principal
     ) {
         return bookingService.getById(bookingId, principal);
-    }
-
-    @PatchMapping("/{bookingId}/confirm")
-    public BookingResponse confirm(
-            @PathVariable UUID bookingId,
-            @AuthenticationPrincipal UserPrincipal principal
-    ) {
-        return bookingService.confirm(bookingId, principal);
-    }
-
-    @PatchMapping("/{bookingId}/cancel")
-    public BookingResponse cancel(
-            @PathVariable UUID bookingId,
-            @AuthenticationPrincipal UserPrincipal principal
-    ) {
-        return bookingService.cancel(bookingId, principal);
     }
 }

@@ -47,6 +47,13 @@ public class SlotLockService {
         redis.execute(RELEASE_SCRIPT, List.of(key(slotId)), token);
     }
 
+    /**
+     * Best-effort release for saga / expiry paths where the create lock token is gone.
+     */
+    public void forceRelease(UUID slotId) {
+        redis.delete(key(slotId));
+    }
+
     private static String key(UUID slotId) {
         return "lock:slot:" + slotId;
     }

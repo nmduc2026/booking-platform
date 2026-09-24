@@ -8,6 +8,7 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -20,6 +21,11 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(ApiException.class)
     public ProblemDetail handleApiException(ApiException ex) {
         return ProblemDetail.forStatusAndDetail(ex.getStatus(), ex.getMessage());
+    }
+
+    @ExceptionHandler(NoResourceFoundException.class)
+    public ProblemDetail handleNotFound(NoResourceFoundException ex) {
+        return ProblemDetail.forStatusAndDetail(HttpStatus.NOT_FOUND, "Not found");
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)

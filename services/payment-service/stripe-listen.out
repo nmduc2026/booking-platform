@@ -1,0 +1,5 @@
+Checking for new versions...
+
+A newer version of the Stripe CLI is available, please update to: v1.51.1
+2026-09-24 13:21:44   --> payment_intent.succeeded [evt_3UJ62MFiHCCjCyqI0XSa8GzG]
+2026-09-24 13:21:44  <--  [200] POST http://localhost:8084/payments/webhook [evt_3UJ62MFiHCCjCyqI0XSa8GzG]

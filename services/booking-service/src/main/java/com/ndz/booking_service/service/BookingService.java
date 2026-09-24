@@ -12,6 +12,8 @@ import com.ndz.booking_service.exception.ApiException;
 import com.ndz.booking_service.outbox.OutboxService;
 import com.ndz.booking_service.repository.BookingRepository;
 import com.ndz.booking_service.security.UserPrincipal;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -23,6 +25,8 @@ import java.util.UUID;
 
 @Service
 public class BookingService {
+
+    private static final Logger log = LoggerFactory.getLogger(BookingService.class);
 
     private static final List<BookingStatus> ACTIVE_STATUSES = List.of(
             BookingStatus.PENDING,
@@ -94,31 +98,74 @@ public class BookingService {
                 .toList();
     }
 
+    /**
+     * Saga: payment succeeded → confirm pending booking.
+     */
     @Transactional
-    public BookingResponse confirm(UUID bookingId, UserPrincipal principal) {
-        Booking booking = findAccessibleBooking(bookingId, principal);
-        if (booking.getStatus() != BookingStatus.PENDING) {
-            throw new ApiException(HttpStatus.CONFLICT, "Only PENDING bookings can be confirmed");
+    public void confirmFromPayment(UUID bookingId) {
+        Booking booking = bookingRepository.findById(bookingId).orElse(null);
+        if (booking == null) {
+            log.warn("Booking {} not found for PAYMENT_SUCCEEDED — absorbing", bookingId);
+            return;
         }
+        if (booking.getStatus() == BookingStatus.CONFIRMED) {
+            log.info("Booking {} already CONFIRMED (idempotent payment success)", bookingId);
+            return;
+        }
+        if (booking.getStatus() != BookingStatus.PENDING) {
+            log.warn("Skipping PAYMENT_SUCCEEDED for booking {} in status {}", bookingId, booking.getStatus());
+            return;
+        }
+
         booking.setStatus(BookingStatus.CONFIRMED);
         outboxService.enqueue(OutboxService.BOOKING_CONFIRMED, booking);
+        slotLockService.forceRelease(booking.getSlotId());
         venueClient.invalidateShopSlotCache(booking.getShopId());
-        return BookingResponse.from(booking);
+        log.info("Booking {} CONFIRMED from payment event", bookingId);
     }
 
+    /**
+     * Saga: payment failed → cancel pending booking and free slot.
+     */
     @Transactional
-    public BookingResponse cancel(UUID bookingId, UserPrincipal principal) {
-        Booking booking = findAccessibleBooking(bookingId, principal);
+    public void cancelFromPayment(UUID bookingId) {
+        Booking booking = bookingRepository.findById(bookingId).orElse(null);
+        if (booking == null) {
+            log.warn("Booking {} not found for PAYMENT_FAILED — absorbing", bookingId);
+            return;
+        }
         if (booking.getStatus() == BookingStatus.CANCELLED) {
-            throw new ApiException(HttpStatus.CONFLICT, "Booking is already cancelled");
+            log.info("Booking {} already CANCELLED (idempotent payment failure)", bookingId);
+            return;
         }
-        if (booking.getStatus() == BookingStatus.CANCELLING) {
-            throw new ApiException(HttpStatus.CONFLICT, "Booking is already cancelling");
+        if (booking.getStatus() != BookingStatus.PENDING && booking.getStatus() != BookingStatus.CANCELLING) {
+            log.warn("Skipping PAYMENT_FAILED for booking {} in status {}", bookingId, booking.getStatus());
+            return;
         }
+
         booking.setStatus(BookingStatus.CANCELLED);
         outboxService.enqueue(OutboxService.BOOKING_CANCELLED, booking);
+        slotLockService.forceRelease(booking.getSlotId());
         venueClient.invalidateShopSlotCache(booking.getShopId());
-        return BookingResponse.from(booking);
+        log.info("Booking {} CANCELLED from payment event", bookingId);
+    }
+
+    /**
+     * Auto-expire unpaid PENDING bookings past expires_at.
+     */
+    @Transactional
+    public int expireOverduePendingBookings() {
+        List<Booking> overdue = bookingRepository.findByStatusAndExpiresAtBefore(
+                BookingStatus.PENDING, Instant.now()
+        );
+        for (Booking booking : overdue) {
+            booking.setStatus(BookingStatus.CANCELLED);
+            outboxService.enqueue(OutboxService.BOOKING_CANCELLED, booking);
+            slotLockService.forceRelease(booking.getSlotId());
+            venueClient.invalidateShopSlotCache(booking.getShopId());
+            log.info("Booking {} expired (PENDING past expires_at) → CANCELLED", booking.getId());
+        }
+        return overdue.size();
     }
 
     private Booking findAccessibleBooking(UUID bookingId, UserPrincipal principal) {
