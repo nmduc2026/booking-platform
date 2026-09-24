@@ -1,3 +1,40 @@
+server:
+  port: 8084
+
 spring:
   application:
     name: payment-service
+  datasource:
+    url: jdbc:postgresql://localhost:5432/booking_platform
+    username: booking
+    password: 123123
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    open-in-view: false
+    properties:
+      hibernate:
+        default_schema: payment_schema
+  flyway:
+    enabled: true
+    schemas: payment_schema
+    default-schema: payment_schema
+    create-schemas: true
+    locations: classpath:db/migration
+
+app:
+  jwt:
+    secret: ${JWT_SECRET:change-me-to-a-very-long-secret-key-at-least-256-bits-long!!}
+  stripe:
+    secret-key: ${STRIPE_SECRET_KEY:sk_test_placeholder}
+    webhook-secret: ${STRIPE_WEBHOOK_SECRET:whsec_placeholder}
+  outbox:
+    relay-enabled: true
+    poll-interval-ms: 2000
+    batch-size: 50
+  sqs:
+    endpoint: ${AWS_ENDPOINT:http://localhost:4566}
+    region: ${AWS_REGION:ap-southeast-1}
+    access-key: ${AWS_ACCESS_KEY_ID:test}
+    secret-key: ${AWS_SECRET_ACCESS_KEY:test}
+    payment-events-queue: payment-events

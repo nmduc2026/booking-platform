@@ -1,0 +1,16 @@
+app:
+  jwt:
+    secret: test-secret-key-that-is-long-enough-for-hs256-algorithm-123456
+  stripe:
+    secret-key: sk_test_dummy
+    webhook-secret: whsec_test_dummy
+  outbox:
+    relay-enabled: false
+    poll-interval-ms: 2000
+    batch-size: 50
+  sqs:
+    endpoint: http://localhost:4566
+    region: ap-southeast-1
+    access-key: test
+    secret-key: test
+    payment-events-queue: payment-events
