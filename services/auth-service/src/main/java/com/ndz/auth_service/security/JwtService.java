@@ -75,7 +75,6 @@ public class JwtService {
         return Role.valueOf(claims.get("role", String.class));
     }
 
-    @SuppressWarnings("unchecked")
     public List<UUID> extractShopIds(Claims claims) {
         Object raw = claims.get("shopIds");
         if (!(raw instanceof List<?> list) || list.isEmpty()) {

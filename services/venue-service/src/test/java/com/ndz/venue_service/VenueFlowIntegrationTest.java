@@ -15,6 +15,7 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.utility.DockerImageName;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
@@ -39,16 +40,20 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class VenueFlowIntegrationTest {
 
     @Container
-    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine")
-            .withDatabaseName("booking_platform")
-            .withUsername("booking")
-            .withPassword("123123");
+    static final PostgreSQLContainer<?> POSTGRES;
+
+    static {
+        POSTGRES = new PostgreSQLContainer<>(DockerImageName.parse("postgres:16-alpine"));
+        POSTGRES.withDatabaseName("booking_platform");
+        POSTGRES.withUsername("booking");
+        POSTGRES.withPassword("123123");
+    }
 
     @DynamicPropertySource
     static void datasourceProps(DynamicPropertyRegistry registry) {
-        registry.add("spring.datasource.url", postgres::getJdbcUrl);
-        registry.add("spring.datasource.username", postgres::getUsername);
-        registry.add("spring.datasource.password", postgres::getPassword);
+        registry.add("spring.datasource.url", POSTGRES::getJdbcUrl);
+        registry.add("spring.datasource.username", POSTGRES::getUsername);
+        registry.add("spring.datasource.password", POSTGRES::getPassword);
     }
 
     @Autowired
@@ -80,7 +85,7 @@ class VenueFlowIntegrationTest {
                 .andReturn();
 
         UUID shopId = UUID.fromString(
-                objectMapper.readTree(shopResult.getResponse().getContentAsString()).get("id").asText()
+                objectMapper.readTree(shopResult.getResponse().getContentAsString()).get("id").asString()
         );
 
         String managerToken = jwtService.generateAccessToken(
@@ -99,7 +104,7 @@ class VenueFlowIntegrationTest {
                 .andReturn();
 
         UUID resourceId = UUID.fromString(
-                objectMapper.readTree(resourceResult.getResponse().getContentAsString()).get("id").asText()
+                objectMapper.readTree(resourceResult.getResponse().getContentAsString()).get("id").asString()
         );
 
         LocalDate day = LocalDate.of(2026, 10, 1);
@@ -149,8 +154,8 @@ class VenueFlowIntegrationTest {
 
         JsonNode shopABody = objectMapper.readTree(shopA.getResponse().getContentAsString());
         JsonNode shopBBody = objectMapper.readTree(shopB.getResponse().getContentAsString());
-        UUID shopAId = UUID.fromString(shopABody.get("id").asText());
-        UUID shopBId = UUID.fromString(shopBBody.get("id").asText());
+        UUID shopAId = UUID.fromString(shopABody.get("id").asString());
+        UUID shopBId = UUID.fromString(shopBBody.get("id").asString());
 
         String managerOfA = jwtService.generateAccessToken(
                 UUID.randomUUID(), "manager-a@test.com", Role.SHOP_MANAGER, List.of(shopAId)

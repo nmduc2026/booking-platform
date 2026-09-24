@@ -1,7 +1,5 @@
 package com.ndz.auth_service;
 
-import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.ObjectMapper;
 import com.ndz.auth_service.entity.Role;
 import com.ndz.auth_service.entity.User;
 import com.ndz.auth_service.entity.UserStatus;
@@ -9,8 +7,8 @@ import com.ndz.auth_service.repository.UserRepository;
 import com.ndz.auth_service.security.JwtService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;
 import org.springframework.http.MediaType;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.test.context.ActiveProfiles;
@@ -21,6 +19,9 @@ import org.springframework.test.web.servlet.MvcResult;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
+import org.testcontainers.utility.DockerImageName;
+import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.ObjectMapper;
 
 import java.util.List;
 import java.util.Map;
@@ -39,16 +40,20 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 class AuthFlowIntegrationTest {
 
     @Container
-    static PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:16-alpine")
-            .withDatabaseName("booking_platform")
-            .withUsername("booking")
-            .withPassword("123123");
+    static final PostgreSQLContainer<?> POSTGRES;
+
+    static {
+        POSTGRES = new PostgreSQLContainer<>(DockerImageName.parse("postgres:16-alpine"));
+        POSTGRES.withDatabaseName("booking_platform");
+        POSTGRES.withUsername("booking");
+        POSTGRES.withPassword("123123");
+    }
 
     @DynamicPropertySource
     static void datasourceProps(DynamicPropertyRegistry registry) {
-        registry.add("spring.datasource.url", postgres::getJdbcUrl);
-        registry.add("spring.datasource.username", postgres::getUsername);
-        registry.add("spring.datasource.password", postgres::getPassword);
+        registry.add("spring.datasource.url", POSTGRES::getJdbcUrl);
+        registry.add("spring.datasource.username", POSTGRES::getUsername);
+        registry.add("spring.datasource.password", POSTGRES::getPassword);
     }
 
     @Autowired
@@ -85,7 +90,7 @@ class AuthFlowIntegrationTest {
                 .andReturn();
 
         JsonNode registerBody = objectMapper.readTree(registerResult.getResponse().getContentAsString());
-        String accessToken = registerBody.get("accessToken").asText();
+        String accessToken = registerBody.get("accessToken").asString();
 
         mockMvc.perform(get("/auth/me")
                         .header("Authorization", "Bearer " + accessToken))
@@ -105,7 +110,7 @@ class AuthFlowIntegrationTest {
                 .andReturn();
 
         JsonNode loginBody = objectMapper.readTree(loginResult.getResponse().getContentAsString());
-        String refreshToken = loginBody.get("refreshToken").asText();
+        String refreshToken = loginBody.get("refreshToken").asString();
 
         MvcResult refreshResult = mockMvc.perform(post("/auth/refresh")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -118,7 +123,7 @@ class AuthFlowIntegrationTest {
                 .andReturn();
 
         JsonNode refreshBody = objectMapper.readTree(refreshResult.getResponse().getContentAsString());
-        assertThat(refreshBody.get("accessToken").asText()).isNotBlank();
+        assertThat(refreshBody.get("accessToken").asString()).isNotBlank();
 
         mockMvc.perform(post("/auth/refresh")
                         .contentType(MediaType.APPLICATION_JSON)
@@ -160,7 +165,7 @@ class AuthFlowIntegrationTest {
                 .andReturn();
 
         JsonNode managerBody = objectMapper.readTree(createManagerResult.getResponse().getContentAsString());
-        UUID managerId = UUID.fromString(managerBody.get("id").asText());
+        UUID managerId = UUID.fromString(managerBody.get("id").asString());
         UUID shopId = UUID.randomUUID();
 
         mockMvc.perform(post("/admin/user-shop-mapping")
@@ -185,7 +190,7 @@ class AuthFlowIntegrationTest {
                 .andReturn();
 
         JsonNode loginBody = objectMapper.readTree(loginResult.getResponse().getContentAsString());
-        String managerAccessToken = loginBody.get("accessToken").asText();
+        String managerAccessToken = loginBody.get("accessToken").asString();
 
         mockMvc.perform(get("/auth/me")
                         .header("Authorization", "Bearer " + managerAccessToken))
@@ -209,7 +214,7 @@ class AuthFlowIntegrationTest {
 
         String accessToken = objectMapper.readTree(registerResult.getResponse().getContentAsString())
                 .get("accessToken")
-                .asText();
+                .asString();
 
         mockMvc.perform(post("/admin/users")
                         .header("Authorization", "Bearer " + accessToken)

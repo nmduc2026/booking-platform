@@ -4,10 +4,6 @@ server:
 spring:
   application:
     name: venue-service
-  autoconfigure:
-    exclude:
-      - org.springframework.boot.data.redis.autoconfigure.DataRedisAutoConfiguration
-      - org.springframework.boot.data.redis.autoconfigure.DataRedisReactiveAutoConfiguration
   datasource:
     url: jdbc:postgresql://localhost:5432/booking_platform
     username: booking

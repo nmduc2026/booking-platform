@@ -8,6 +8,7 @@ import com.ndz.auth_service.dto.UserResponse;
 import com.ndz.auth_service.entity.RefreshToken;
 import com.ndz.auth_service.entity.Role;
 import com.ndz.auth_service.entity.User;
+import com.ndz.auth_service.entity.UserShopMapping;
 import com.ndz.auth_service.entity.UserStatus;
 import com.ndz.auth_service.exception.ApiException;
 import com.ndz.auth_service.repository.RefreshTokenRepository;
@@ -141,7 +142,7 @@ public class AuthService {
 
     private List<UUID> shopIdsOf(UUID userId) {
         return userShopMappingRepository.findByUserId(userId).stream()
-                .map(mapping -> mapping.getShopId())
+                .map(UserShopMapping::getShopId)
                 .toList();
     }
 
