@@ -21,7 +21,7 @@ import jakarta.servlet.http.HttpServletResponse;
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
-@EnableConfigurationProperties({JwtProperties.class, BootstrapAdminProperties.class})
+@EnableConfigurationProperties({JwtProperties.class, DemoSeedProperties.class})
 public class SecurityConfig {
 
     @Bean

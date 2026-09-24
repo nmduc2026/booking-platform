@@ -1,5 +1,5 @@
 app:
-  bootstrap-admin:
+  seed:
     enabled: false
   jwt:
     secret: test-secret-key-that-is-long-enough-for-hs256-algorithm-123456

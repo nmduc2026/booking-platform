@@ -27,8 +27,14 @@ app:
     secret: ${JWT_SECRET:change-me-to-a-very-long-secret-key-at-least-256-bits-long!!}
     access-token-expiration-ms: 900000      # 15 minutes
     refresh-token-expiration-ms: 604800000  # 7 days
-  bootstrap-admin:
+  seed:
     enabled: true
-    email: admin@booking.local
-    password: Admin@123456
-    full-name: System Admin
+    admin-email: admin@booking.local
+    admin-password: Admin@123456
+    admin-full-name: System Admin
+    manager-email: manager@booking.local
+    manager-password: Manager@123456
+    manager-full-name: Demo Manager
+    user-email: user@booking.local
+    user-password: User@123456
+    user-full-name: Demo Customer

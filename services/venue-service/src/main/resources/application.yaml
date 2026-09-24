@@ -29,3 +29,5 @@ spring:
 app:
   jwt:
     secret: ${JWT_SECRET:change-me-to-a-very-long-secret-key-at-least-256-bits-long!!}
+  seed:
+    enabled: true
