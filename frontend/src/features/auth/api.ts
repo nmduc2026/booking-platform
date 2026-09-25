@@ -1,5 +1,6 @@
 import { api } from "@/lib/api"
 import type { AuthResponse, User } from "@/lib/auth-storage"
+import { buildPageQuery, type PageResponse } from "@/lib/pagination"
 
 export function login(email: string, password: string) {
   return api<AuthResponse>("/api/auth/login", {
@@ -24,6 +25,15 @@ export function register(payload: {
 
 export function me() {
   return api<User>("/api/auth/me")
+}
+
+export function listAdminUsers(params: {
+  page: number
+  size?: number
+  q?: string
+  role?: string
+}) {
+  return api<PageResponse<User>>(`/api/auth/admin/users?${buildPageQuery(params)}`)
 }
 
 export function createAdminUser(payload: {

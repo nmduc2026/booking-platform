@@ -3,6 +3,7 @@ package com.ndz.venue_service.service;
 import com.ndz.venue_service.dto.CreateResourceRequest;
 import com.ndz.venue_service.dto.CreateShopRequest;
 import com.ndz.venue_service.dto.CreateTimeSlotRequest;
+import com.ndz.venue_service.dto.PageResponse;
 import com.ndz.venue_service.dto.ResourceResponse;
 import com.ndz.venue_service.dto.ShopResponse;
 import com.ndz.venue_service.dto.TimeSlotResponse;
@@ -16,6 +17,8 @@ import com.ndz.venue_service.repository.ResourceRepository;
 import com.ndz.venue_service.repository.ShopRepository;
 import com.ndz.venue_service.repository.TimeSlotRepository;
 import com.ndz.venue_service.security.UserPrincipal;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -56,6 +59,18 @@ public class VenueService {
         shop.setStatus(ShopStatus.ACTIVE);
         shopRepository.save(shop);
         return ShopResponse.from(shop);
+    }
+
+    @Transactional(readOnly = true)
+    public PageResponse<ShopResponse> listShops(int page, int size, ShopStatus status, String q) {
+        int safePage = Math.max(page, 0);
+        int safeSize = Math.min(Math.max(size, 1), 100);
+        var result = shopRepository.search(
+                status,
+                blankToNull(q),
+                PageRequest.of(safePage, safeSize, Sort.by(Sort.Direction.DESC, "createdAt"))
+        );
+        return PageResponse.from(result.map(ShopResponse::from));
     }
 
     @Transactional(readOnly = true)
@@ -165,5 +180,12 @@ public class VenueService {
         if (shop.getStatus() != ShopStatus.ACTIVE) {
             throw new ApiException(HttpStatus.BAD_REQUEST, "Shop is inactive");
         }
+    }
+
+    private static String blankToNull(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        return value.trim();
     }
 }

@@ -1,6 +1,7 @@
 package com.ndz.auth_service.service;
 
 import com.ndz.auth_service.dto.AdminCreateUserRequest;
+import com.ndz.auth_service.dto.PageResponse;
 import com.ndz.auth_service.dto.UserResponse;
 import com.ndz.auth_service.dto.UserShopMappingRequest;
 import com.ndz.auth_service.dto.UserShopMappingResponse;
@@ -11,12 +12,15 @@ import com.ndz.auth_service.entity.UserStatus;
 import com.ndz.auth_service.exception.ApiException;
 import com.ndz.auth_service.repository.UserRepository;
 import com.ndz.auth_service.repository.UserShopMappingRepository;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.UUID;
 
 @Service
 public class AdminService {
@@ -33,6 +37,18 @@ public class AdminService {
         this.userRepository = userRepository;
         this.userShopMappingRepository = userShopMappingRepository;
         this.passwordEncoder = passwordEncoder;
+    }
+
+    @Transactional(readOnly = true)
+    public PageResponse<UserResponse> listUsers(int page, int size, Role role, String q) {
+        int safePage = Math.max(page, 0);
+        int safeSize = Math.min(Math.max(size, 1), 100);
+        var result = userRepository.search(
+                role,
+                blankToNull(q),
+                PageRequest.of(safePage, safeSize, Sort.by(Sort.Direction.DESC, "createdAt"))
+        );
+        return PageResponse.from(result.map(user -> UserResponse.from(user, shopIdsOf(user.getId()))));
     }
 
     @Transactional
@@ -72,5 +88,18 @@ public class AdminService {
         userShopMappingRepository.save(mapping);
 
         return new UserShopMappingResponse(mapping.getId(), user.getId(), mapping.getShopId());
+    }
+
+    private List<UUID> shopIdsOf(UUID userId) {
+        return userShopMappingRepository.findByUserId(userId).stream()
+                .map(UserShopMapping::getShopId)
+                .toList();
+    }
+
+    private static String blankToNull(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        return value.trim();
     }
 }

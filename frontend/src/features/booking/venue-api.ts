@@ -1,4 +1,5 @@
 import { api } from "@/lib/api"
+import { buildPageQuery, type PageResponse } from "@/lib/pagination"
 
 export type Shop = {
   id: string
@@ -29,6 +30,15 @@ export type Resource = {
 
 export function listShops() {
   return api<Shop[]>("/api/venue/shops", { auth: false })
+}
+
+export function listAdminShops(params: {
+  page: number
+  size?: number
+  q?: string
+  status?: string
+}) {
+  return api<PageResponse<Shop>>(`/api/venue/admin/shops?${buildPageQuery(params)}`)
 }
 
 export function listShopSlots(shopId: string, date: string) {
